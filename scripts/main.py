@@ -1,5 +1,6 @@
 import argparse
 import os
+import requests
 
 import pandas as pd
 import streamlit as st
@@ -35,9 +36,12 @@ def main():
     # show video
     movie_dir = os.path.join(base_dir, 'reports', 'movie', 'stretch')
     st.markdown('above is tracking data[[data link](https://github.com/Friends-of-Tracking-Data-FoTD/Last-Row)], and below is stretch index [[paper link](https://www.researchgate.net/publication/230600552_Capturing_complex_non-linear_team_behaviours_during_competitive_football_performance)].')
-    with open(os.path.join(movie_dir, f'{play}.mp4'), 'rb') as fi:
-        video_bytes = fi.read()
-    
+    if args.env == 'local':
+        with open(os.path.join(movie_dir, f'{play}.mp4'), 'rb') as fi:
+            video_bytes = fi.read()
+    else:
+        video_bytes = requests.get(os.path.join(movie_dir, f'{play}.mp4')).content
+
     st.video(video_bytes)
     st.markdown('my twitter account is [@saeeeeru](https://twitter.com/saeeeeru/)')
 
