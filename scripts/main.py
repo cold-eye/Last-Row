@@ -12,6 +12,28 @@ def parse_args():
 
     return args
 
+play_list = [
+    'Fulham 0 - [1] Liverpool', 
+    'Genk 0 - [3] Liverpool', 
+    'Bayern 0 - [1] Liverpool', 
+    'Southampton 1 - [2] Liverpool', 
+    'Bournemouth 0 - 3 Liverpool', 
+    'Liverpool [1] - 0 Everton', 
+    'Liverpool [3] - 0 Bournemouth', 
+    'Liverpool [1] - 0 Wolves', 
+    'Liverpool [2] - 1 Chelsea', 
+    'Liverpool [3] - 0 Norwich', 
+    'Liverpool [2] - 0 Porto', 
+    'Liverpool [2] - 0 Everton', 
+    'Liverpool [2] - 1 Newcastle', 
+    'Liverpool [2] - 0 Salzburg', 
+    'Liverpool [2] - 0 Man City', 
+    'Liverpool [1] - 0 Watford', 
+    'Leicester 0 - [3] Liverpool', 
+    'Liverpool [4] - 0 Barcelona', 
+    'Porto 0 - [2] Liverpool'
+]
+
 def main():
     # parse argument
     args = parse_args()
@@ -26,12 +48,8 @@ def main():
     # set title
     st.title('Liverpool Goal Scene Analyzer')
 
-    # generate select box
-    df = pd.read_csv(os.path.join(base_dir, 'datasets', 'positional_data', 'liverpool_2019.csv'), index_col=['play'])
-    play_list = df.index.unique().tolist()
-
     # return selected play
-    play = st.selectbox('Which Goal do you want to see??', play_list[::-1])
+    play = st.selectbox('Which Goal do you want to see??', play_list)
 
     annotate_flg = st.checkbox('annotate player_idx and velocity')
 
