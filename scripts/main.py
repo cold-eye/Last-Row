@@ -31,10 +31,12 @@ def main():
     play_list = df.index.unique().tolist()
 
     # return selected play
-    play = st.selectbox('Which Goal do you want to see??', play_list)
+    play = st.selectbox('Which Goal do you want to see??', play_list[::-1])
+
+    annotate_flg = st.checkbox('annotate player_idx and velocity')
 
     # show video
-    movie_dir = os.path.join(base_dir, 'reports', 'movie', 'stretch')
+    movie_dir = os.path.join(base_dir, 'reports', 'movie', 'stretch') if not annotate_flg else os.path.join(base_dir, 'reports', 'movie', 'stretch_annotated')
     st.markdown('above is tracking data[[data link](https://github.com/Friends-of-Tracking-Data-FoTD/Last-Row)], and below is stretch index [[paper link](https://www.researchgate.net/publication/230600552_Capturing_complex_non-linear_team_behaviours_during_competitive_football_performance)].')
     if args.env == 'local':
         with open(os.path.join(movie_dir, f'{play}.mp4'), 'rb') as fi:
