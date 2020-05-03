@@ -389,14 +389,14 @@ def plot_pitchcontrol_for_event(
     if plotting_presence:
         if team_to_plot != possession_team:
             PPCF = -1 * PPCF
-        if team_to_plot == "Home":
+        if team_to_plot == "Liverpool":
             cmap = home_presence_cmap
         else:
             cmap = away_presence_cmap
 
     # Otherwise, apply the default heatmap from the original function
     else:
-        if possession_team == "Home":
+        if possession_team == "Liverpool":
             cmap = home_cmap
         else:
             cmap = away_cmap
