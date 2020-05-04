@@ -523,7 +523,7 @@ class PlayerPitchControlAnalysisPlayer(object):
         )
 
         if replace_function == "presence":
-            mviz.plot_pitchcontrol_for_event(
+            fig, ax = mviz.plot_pitchcontrol_for_event(
                 event_id=self.event_id,
                 events=self.events,
                 df_dict=self.df_dict,
@@ -541,7 +541,7 @@ class PlayerPitchControlAnalysisPlayer(object):
             )
         elif replace_function == "movement":
 
-            mviz.plot_pitchcontrol_for_event(
+            fig, ax = mviz.plot_pitchcontrol_for_event(
                 event_id=self.event_id,
                 events=self.events,
                 df_dict=self.df_dict,
@@ -577,7 +577,7 @@ class PlayerPitchControlAnalysisPlayer(object):
                     f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
                 ]
 
-            mviz.plot_pitchcontrol_for_event(
+            fig, ax = mviz.plot_pitchcontrol_for_event(
                 event_id=self.event_id,
                 events=self.events,
                 df_dict=self.df_dict,
@@ -625,6 +625,8 @@ class PlayerPitchControlAnalysisPlayer(object):
                 + str(self.player_to_analyze),
                 fontdict={"fontsize": 18},
             )
+
+        return fig, ax
 
     def _get_players_on_pitch(self):
         pass_frame = self.events.loc[self.event_id]["Start Frame"]

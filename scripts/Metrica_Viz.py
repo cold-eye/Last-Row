@@ -167,22 +167,21 @@ def plot_frame(df_dict, figax=None, team_color_dict={'HOmne':'r','Away':'b'}, fi
     ax.legend(handles=[mpatches.Patch(color=color, label=team_name) for team_name, color in team_color_dict.items()], fontsize=12, title='Team')
     return fig,ax
     
-def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, frames_per_second=25, team_colors=('r','b'), field_dimen = (106.0,68.0), title=None, include_player_velocities=False, PlayerMarkerSize=10, PlayerAlpha=0.7):
+def save_match_clip(df_dict, fpath, fname='clip_test', figax=None, frames_per_second=25, team_color_dict={'Home':'r','Away':'b'}, field_dimen = (106.0,68.0), annotate=False, include_player_velocities=False, PlayerMarkerSize=10, PlayerAlpha=0.7):
     """ save_match_clip( hometeam, awayteam, fpath )
     
     Generates a movie from Metrica tracking data, saving it in the 'fpath' directory with name 'fname'
     
     Parameters
     -----------
-        hometeam: home team tracking data DataFrame. Movie will be created from all rows in the DataFrame
-        awayteam: away team tracking data DataFrame. The indices *must* match those of the hometeam DataFrame
+        df_dict: 
         fpath: directory to save the movie
         fname: movie filename. Default is 'clip_test.mp4'
         fig,ax: Can be used to pass in the (fig,ax) objects of a previously generated pitch. Set to (fig,ax) to use an existing figure, or None (the default) to generate a new pitch plot,
         frames_per_second: frames per second to assume when generating the movie. Default is 25.
-        team_colors: Tuple containing the team colors of the home & away team. Default is 'r' (red, home team) and 'b' (blue away team)
+        team_color_dict:
         field_dimen: tuple containing the length and width of the pitch in meters. Default is (106,68)
-        title: string
+        annotate: Boolen
         include_player_velocities: Boolean variable that determines whether player velocities are also plotted (as quivers). Default is False
         PlayerMarkerSize: size of the individual player marlers. Default is 10
         PlayerAlpha: alpha (transparency) of player markers. Defaault is 0.7
@@ -193,9 +192,10 @@ def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, fra
 
     """
     # check that indices match first
-    assert np.all( hometeam.index==awayteam.index ), "Home and away team Dataframe indices must be the same"
+    team1, team2 = list(df_dict.keys())
+    assert np.all( df_dict[team1].index==df_dict[team2].index ), "Home and away team Dataframe indices must be the same"
     # in which case use home team index
-    index = hometeam.index
+    index = df_dict[team1].index
     # Set figure and movie settings
     FFMpegWriter = animation.writers['ffmpeg']
     metadata = dict(title='Tracking Data', artist='Matplotlib', comment='Metrica tracking data clip')
@@ -212,7 +212,9 @@ def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, fra
     with writer.saving(fig, fname, 100):
         for i in index:
             figobjs = [] # this is used to collect up all the axis objects so that they can be deleted after each iteration
-            for team,color in zip( [hometeam.loc[i],awayteam.loc[i]], team_colors) :
+            for team_name in df_dict.keys():
+                team = df_dict[team_name].loc[i]
+                color = team_color_dict[team_name]
                 x_columns = [c for c in team.keys() if c[-2:].lower()=='_x' and c!='ball_x'] # column header for player x positions
                 y_columns = [c for c in team.keys() if c[-2:].lower()=='_y' and c!='ball_y'] # column header for player y positions
                 objs, = ax.plot( team[x_columns], team[y_columns], color=color, linestyle='None', marker='o', MarkerSize=PlayerMarkerSize, alpha=PlayerAlpha ) # plot player positions
@@ -222,18 +224,19 @@ def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, fra
                     vy_columns = ['{}_vy'.format(c[:-2]) for c in y_columns] # column header for player y positions
                     objs = ax.quiver( team[x_columns], team[y_columns], team[vx_columns], team[vy_columns], color=color, scale_units='inches', scale=10.,width=0.0015,headlength=5,headwidth=3,alpha=PlayerAlpha)
                     figobjs.append(objs)
+                if annotate:
+                    figobjs += [ax.text( team[x]+0.5, team[y]+0.5, x.split('_')[0], fontsize=10, color=color) for x,y in zip(x_columns,y_columns) if not (np.isnan(team[x]) or np.isnan(team[y]))]
             # plot ball
             objs, = ax.plot( team['ball_x'], team['ball_y'], color='yellow', marker='o', MarkerSize=6, alpha=1.0, LineWidth=0)
             figobjs.append(objs)
             # include match time at the top
-            if title:
-                objs = ax.text(-2.5,field_dimen[1]/2.+1., title, fontsize=14, color='w')
-            else:
-                frame_minute =  int( team['Time [s]']/60. )
-                frame_second =  ( team['Time [s]']/60. - frame_minute ) * 60.
-                timestring = "%d:%1.2f" % ( frame_minute, frame_second  )
-                objs = ax.text(-2.5,field_dimen[1]/2.+1., timestring, fontsize=14, color='w')
+            frame_minute =  int( team['Time [s]']/60. )
+            frame_second =  ( team['Time [s]']/60. - frame_minute ) * 60.
+            timestring = "%d:%1.2f" % ( frame_minute, frame_second  )
+            objs = ax.text(-2.5,field_dimen[1]/2.+1., timestring, fontsize=14, color='w')
             figobjs.append(objs)
+            # set legend
+            figobjs.append(ax.legend(handles=[mpatches.Patch(color=color, label=team_name) for team_name, color in team_color_dict.items()], fontsize=12, title='Team'))
             writer.grab_frame()
             # Delete all axis objects (other than pitch lines) in preperation for next frame
             for figobj in figobjs:
