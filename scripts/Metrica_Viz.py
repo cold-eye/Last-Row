@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.animation as animation
 from matplotlib.colors import LinearSegmentedColormap
+import matplotlib.patches as mpatches
 
 twitter_color = "#141d26"
 
@@ -107,6 +108,8 @@ def plot_pitch( field_dimen = (106.0,68.0), field_color ='green', linewidth=2, m
         ax.plot(s*half_pitch_length-s*x,y,lc,linewidth=linewidth)
         
     # remove axis labels and ticks
+    ax.spines['top'].set_visible(False); ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False); ax.spines['right'].set_visible(False)
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     ax.set_xticks([])
@@ -117,19 +120,19 @@ def plot_pitch( field_dimen = (106.0,68.0), field_color ='green', linewidth=2, m
     ax.set_xlim([-xmax,xmax])
     ax.set_ylim([-ymax,ymax])
     ax.set_axisbelow(True)
+
     return fig,ax
 
-def plot_frame( hometeam, awayteam, figax=None, team_colors=('r','b'), field_dimen = (106.0,68.0), include_player_velocities=False, PlayerMarkerSize=10, PlayerAlpha=0.7, annotate=False ):
+def plot_frame(df_dict, figax=None, team_color_dict={'HOmne':'r','Away':'b'}, field_dimen = (106.0,68.0), include_player_velocities=False, PlayerMarkerSize=10, PlayerAlpha=0.7, annotate=False ):
     """ plot_frame( hometeam, awayteam )
     
     Plots a frame of Metrica tracking data (player positions and the ball) on a football pitch. All distances should be in meters.
     
     Parameters
     -----------
-        hometeam: row (i.e. instant) of the home team tracking data frame
-        awayteam: row of the away team tracking data frame
+        df_dict:
         fig,ax: Can be used to pass in the (fig,ax) objects of a previously generated pitch. Set to (fig,ax) to use an existing figure, or None (the default) to generate a new pitch plot, 
-        team_colors: Tuple containing the team colors of the home & away team. Default is 'r' (red, home team) and 'b' (blue away team)
+        team_color_dict: 
         field_dimen: tuple containing the length and width of the pitch in meters. Default is (106,68)
         include_player_velocities: Boolean variable that determines whether player velocities are also plotted (as quivers). Default is False
         PlayerMarkerSize: size of the individual player marlers. Default is 10
@@ -146,7 +149,8 @@ def plot_frame( hometeam, awayteam, figax=None, team_colors=('r','b'), field_dim
     else: # overlay on a previously generated pitch
         fig,ax = figax # unpack tuple
     # plot home & away teams in order
-    for team,color in zip( [hometeam,awayteam], team_colors) :
+    for team_name in df_dict.keys():
+        team, color = df_dict[team_name], team_color_dict[team_name]
         x_columns = [c for c in team.keys() if c[-2:].lower()=='_x' and c!='ball_x'] # column header for player x positions
         y_columns = [c for c in team.keys() if c[-2:].lower()=='_y' and c!='ball_y'] # column header for player y positions
         ax.plot( team[x_columns], team[y_columns], color=color, marker='o', MarkerSize=PlayerMarkerSize, linestyle='None', alpha=PlayerAlpha ) # plot player positions
@@ -157,7 +161,10 @@ def plot_frame( hometeam, awayteam, figax=None, team_colors=('r','b'), field_dim
         if annotate:
             [ax.text( team[x]+0.5, team[y]+0.5, x.split('_')[1], fontsize=10, color=color) for x,y in zip(x_columns,y_columns) if not (np.isnan(team[x]) or np.isnan(team[y]))] 
     # plot ball
-    ax.plot( hometeam['ball_x'], hometeam['ball_y'], color='yellow', marker='o', MarkerSize=6, alpha=1.0, LineWidth=0)
+    team_name = list(df_dict.keys())[0]
+    ax.plot(df_dict[team_name]['ball_x'], df_dict[team_name]['ball_y'], color='yellow', marker='o', MarkerSize=6, alpha=1.0, LineWidth=0)
+    # set legend
+    ax.legend(handles=[mpatches.Patch(color=color, label=team_name) for team_name, color in team_color_dict.items()], fontsize=12, title='Team')
     return fig,ax
     
 def save_match_clip(hometeam,awayteam, fpath, fname='clip_test', figax=None, frames_per_second=25, team_colors=('r','b'), field_dimen = (106.0,68.0), title=None, include_player_velocities=False, PlayerMarkerSize=10, PlayerAlpha=0.7):
@@ -277,8 +284,7 @@ def plot_events( events, figax=None, field_dimen = (106.0,68), indicators = ['Ma
 def plot_pitchcontrol_for_event(
     event_id,
     events,
-    tracking_home,
-    tracking_away,
+    df_dict,
     PPCF,
     xgrid,
     ygrid,
@@ -297,7 +303,7 @@ def plot_pitchcontrol_for_event(
     player_y_velocity=0,
     cmap_list=[],
     alpha_pitch_control=0.5,
-    team_colors=("r", "b"),
+    team_color_dict={'Home':"r", 'Away':"b"},
     field_color="white"
 ):
     """ plot_pitchcontrol_for_event( event_id, events,  tracking_home, tracking_away, PPCF, xgrid, ygrid )
@@ -308,8 +314,7 @@ def plot_pitchcontrol_for_event(
     -----------
         event_id: Index (not row) of the event that describes the instant at which the pitch control surface should be calculated
         events: Dataframe containing the event data
-        tracking_home: (entire) tracking DataFrame for the Home team
-        tracking_away: (entire) tracking DataFrame for the Away team
+        df_dict: keys=team, values=pd.DataFrame
         PPCF: Pitch control surface (dimen (n_grid_cells_x,n_grid_cells_y) ) containing pitch control probability for the attcking team (as returned by the generate_pitch_control_for_event in Metrica_PitchControl)
         xgrid: Positions of the pixels in the x-direction (field length) as returned by the generate_pitch_control_for_event in Metrica_PitchControl
         ygrid: Positions of the pixels in the y-direction (field width) as returned by the generate_pitch_control_for_event in Metrica_PitchControl
@@ -320,7 +325,7 @@ def plot_pitchcontrol_for_event(
         plotting_difference: Tells us if we are plotting a difference of pitch controls
         cmap_list: List of colors to use in the pitch control spaces for each team. Default is an empty list.
         alpha_pitch_control: alpha (transparency) of spaces heatmap. Default is 0.5
-        team_colors: Tuple containing the team colors of the home & away team. Default is 'r' (red, home team) and 'b' (blue away team)
+        team_color_dict: 
         field_color: color of the field. Default is green.
 
     Returrns
@@ -334,13 +339,14 @@ def plot_pitchcontrol_for_event(
 
     possession_team = events.loc[event_id].Team
 
+    tmp_df_dict = {team:df.loc[event_frame] for team, df in df_dict.items()}
+
     # plot frame and event
     fig, ax = plot_pitch(field_color=field_color, field_dimen=field_dimen)
     plot_frame(
-        tracking_home.loc[event_frame],
-        tracking_away.loc[event_frame],
+        tmp_df_dict,
         figax=(fig, ax),
-        team_colors=team_colors,
+        team_color_dict=team_color_dict,
         PlayerAlpha=alpha,
         include_player_velocities=include_player_velocities,
         annotate=annotate,

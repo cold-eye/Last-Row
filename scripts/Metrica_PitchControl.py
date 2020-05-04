@@ -160,7 +160,7 @@ def default_model_params(time_to_control_veto=3):
     params['time_to_control_def'] = time_to_control_veto*np.log(10) * (np.sqrt(3)*params['tti_sigma']/np.pi + 1/params['lambda_def'])
     return params
 
-def generate_pitch_control_for_event(event_id, events, tracking_home, tracking_away, params, team_list, field_dimen = (106.,68.,), n_grid_cells_x = 50):
+def generate_pitch_control_for_event(event_id, events, df_dict, params, field_dimen = (106.,68.,), n_grid_cells_x = 50):
     """ generate_pitch_control_for_event
     
     Evaluates pitch control surface over the entire field at the moment of the given event (determined by the index of the event passed as an input)
@@ -169,8 +169,7 @@ def generate_pitch_control_for_event(event_id, events, tracking_home, tracking_a
     -----------
         event_id: Index (not row) of the event that describes the instant at which the pitch control surface should be calculated
         events: Dataframe containing the event data
-        tracking_home: tracking DataFrame for the Home team
-        tracking_away: tracking DataFrame for the Away team
+        df_dict: keys=team_list, values=pd.DataFrame
         params: Dictionary of model parameters (default model parameters can be generated using default_model_params() )
         field_dimen: tuple containing the length and width of the pitch in meters. Default is (106,68)
         n_grid_cells_x: Number of pixels in the grid (in the x-direction) that covers the surface. Default is 50.
@@ -196,9 +195,9 @@ def generate_pitch_control_for_event(event_id, events, tracking_home, tracking_a
     PPCFa = np.zeros( shape = (len(ygrid), len(xgrid)) )
     PPCFd = np.zeros( shape = (len(ygrid), len(xgrid)) )
     # initialise player positions and velocities for pitch control calc (so that we're not repeating this at each grid cell position)
-    not_pass_team = [team for team in team_list if team != pass_team][0]
-    attacking_players = initialise_players(tracking_home.loc[pass_frame],pass_team,params)
-    defending_players = initialise_players(tracking_away.loc[pass_frame],not_pass_team,params)
+    not_pass_team = [team for team in df_dict.keys() if team != pass_team][0]
+    attacking_players = initialise_players(df_dict[pass_team].loc[pass_frame],pass_team,params)
+    defending_players = initialise_players(df_dict[not_pass_team].loc[pass_frame],not_pass_team,params)
     # calculate pitch pitch control model at each location on the pitch
     for i in range( len(ygrid) ):
         for j in range( len(xgrid) ):
