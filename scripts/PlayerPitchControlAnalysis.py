@@ -4,17 +4,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 
-
 class PlayerPitchControlAnalysisPlayer(object):
     def __init__(
         self,
-        tracking_home,
-        tracking_away,
+        df_dict,
         params,
         events,
         event_id,
         team_player_to_analyze,
-        team_list,
         player_to_analyze,
         field_dimens=(106.0, 68.0),
         n_grid_cells_x=50,
@@ -53,10 +50,7 @@ class PlayerPitchControlAnalysisPlayer(object):
         ``Metrica_viz.py``
 
         Initialization parameters:
-        :param pd.DataFrame tracking_home : tracking DataFrame for the Home team, containing velocity vectors for each
-                player.
-        :param pd.DataFrame tracking_away: tracking DataFrame for the Away team, containing velocity vectors for each
-                player
+        :param dict df_dict : keys=team_list, values=pd.DataFrame witb velocity for each player
         :param dict params: Dictionary of model parameters (default model parameters can be generated using
                 default_model_params())
         :param pd.DataFrame events: DataFrame containing the event data
@@ -72,13 +66,11 @@ class PlayerPitchControlAnalysisPlayer(object):
 
 
         """
-        self.tracking_home = tracking_home
-        self.tracking_away = tracking_away
+        self.df_dict = df_dict
         self.params = params
         self.events = events
         self.event_id = event_id
         self.team_player_to_analyze = team_player_to_analyze
-        self.team_list = team_list
         self.player_to_analyze = player_to_analyze
         self.field_dimens = field_dimens
         self.n_grid_cells_x = n_grid_cells_x
@@ -89,10 +81,8 @@ class PlayerPitchControlAnalysisPlayer(object):
         ) = mpc.generate_pitch_control_for_event(
             event_id=self.event_id,
             events=self.events,
-            tracking_home=self.tracking_home,
-            tracking_away=self.tracking_away,
+            df_dict=self.df_dict,
             params=self.params,
-            team_list=self.team_list
         )
 
     def calculate_total_space_on_pitch_team(self, pitch_control_result):
@@ -147,24 +137,23 @@ class PlayerPitchControlAnalysisPlayer(object):
         event_frame = self.events.loc[self.event_id]["Start Frame"]
 
         # Replace player's velocity datapoints with new velocity vector
-        temp_tracking_home = self.tracking_home.copy()
-        temp_tracking_away = self.tracking_away.copy()
-
-        temp_tracking_home.at[
-            event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
-        ] = replace_x_velocity
-        temp_tracking_home.at[
-            event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
-        ] = replace_y_velocity
-
+        tmp_df_dict = self.df_dict.copy()
+        for team, df in tmp_df_dict.items():
+            if team == self.team_player_to_analyze:
+                df_tmp = df.copy()
+                df_tmp.at[
+                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
+                ] = replace_x_velocity
+                df_tmp.at[
+                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
+                ] = replace_y_velocity
+                tmp_df_dict[team] = df_tmp
 
         edited_pitch_control, xgrid, ygrid = mpc.generate_pitch_control_for_event(
             event_id=self.event_id,
             events=self.events,
-            tracking_home=temp_tracking_home,
-            tracking_away=temp_tracking_away,
+            df_dict=tmp_df_dict,
             params=self.params,
-            team_list=self.team_list,
             field_dimen=self.field_dimens,
             n_grid_cells_x=self.n_grid_cells_x,
         )
@@ -189,29 +178,30 @@ class PlayerPitchControlAnalysisPlayer(object):
 
         # Replace player's datapoint nan's, so pitch control does not take into account
         # the player when computing its surface
-        temp_tracking_home = self.tracking_home.copy()
-        temp_tracking_away = self.tracking_away.copy()
+        tmp_df_dict = self.df_dict.copy()
+        for team, df in tmp_df_dict.items():
+            if team == self.team_player_to_analyze:
+                df_tmp = df.copy()
+                df_tmp.at[
+                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_x"
+                ] = np.nan
+                df_tmp.at[
+                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_y"
+                ] = np.nan
+                df_tmp.at[
+                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
+                ] = np.nan
+                df_tmp.at[
+                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
+                ] = np.nan
+                tmp_df_dict[team] = df_tmp
 
-        temp_tracking_home.at[
-            event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_x"
-        ] = np.nan
-        temp_tracking_home.at[
-            event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_y"
-        ] = np.nan
-        temp_tracking_home.at[
-            event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
-        ] = np.nan
-        temp_tracking_home.at[
-            event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
-        ] = np.nan
 
         edited_pitch_control, xgrid, ygrid = mpc.generate_pitch_control_for_event(
             event_id=self.event_id,
             events=self.events,
-            tracking_home=temp_tracking_home,
-            tracking_away=temp_tracking_away,
+            df_dict=tmp_df_dict,
             params=self.params,
-            team_list=self.team_list,
             field_dimen=self.field_dimens,
             n_grid_cells_x=self.n_grid_cells_x,
         )
@@ -267,29 +257,29 @@ class PlayerPitchControlAnalysisPlayer(object):
         event_frame = self.events.loc[self.event_id]["Start Frame"]
 
         # Replace datapoints with a new location and velocity vector
-        temp_tracking_home = self.tracking_home.copy()
-        temp_tracking_away = self.tracking_away.copy()
-
-        temp_tracking_home.at[
-            event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_x"
-        ] = relative_x_change
-        temp_tracking_home.at[
-            event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_y"
-        ] = relative_y_change
-        temp_tracking_home.at[
-            event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
-        ] = replace_x_velocity
-        temp_tracking_home.at[
-            event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
-        ] = replace_y_velocity
-
+        tmp_df_dict = self.df_dict.copy()
+        for team, df in tmp_df_dict.items():
+            if team == self.team_player_to_analyze:
+                df_tmp = df.copy()
+                df_tmp.at[
+                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_x"
+                ] = relative_x_change
+                df_tmp.at[
+                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_y"
+                ] = relative_y_change
+                df_tmp.at[
+                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
+                ] = replace_x_velocity
+                df_tmp.at[
+                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
+                ] = replace_y_velocity
+                tmp_df_dict[team] = df_tmp
+        
         edited_pitch_control, xgrid, ygrid = mpc.generate_pitch_control_for_event(
             event_id=self.event_id,
             events=self.events,
-            tracking_home=temp_tracking_home,
-            tracking_away=temp_tracking_away,
+            df_dict=tmp_df_dict,
             params=self.params,
-            team_list=self.team_list,
             field_dimen=self.field_dimens,
             n_grid_cells_x=self.n_grid_cells_x,
         )
@@ -438,8 +428,8 @@ class PlayerPitchControlAnalysisPlayer(object):
 
         (
             pitch_control_difference,
-            xgrid,
-            ygrid,
+            _,
+            _,
         ) = self.calculate_pitch_control_difference(
             replace_x_velocity=replace_x_velocity,
             replace_y_velocity=replace_y_velocity,
@@ -465,10 +455,9 @@ class PlayerPitchControlAnalysisPlayer(object):
         relative_y_change=0,
         replace_velocity=False,
         replace_function="movement",
-        cmap_list=[],
         alpha=0.7,
         alpha_pitch_control=0.5,
-        team_colors=("r", "b")
+        team_color_dict={'Home':"r", 'Away':"b"}
     ):
         """
         Function description:
@@ -510,10 +499,9 @@ class PlayerPitchControlAnalysisPlayer(object):
             Must be either "movement", "presence" or "location". Defaults to "movement". For a detailed description of
             this argument, please refer to the docstring in ``calculate_pitch_control_difference``.
 
-        :param list cmap_list: List of colors to use in the pitch control spaces for each team. Default is an empty list.
         :param float alpha: alpha (transparency) of player markers. Default is 0.7
         :param float alpha_pitch_control: alpha (transparency) of spaces heatmap. Default is 0.5
-        :param tuple team_colors: Tuple containing the team colors of the home & away team. Default is 'r' (red, home team) and 'b' (blue away team)
+        :param dict team_color_dict: 
 
 
         Returns:
@@ -533,11 +521,10 @@ class PlayerPitchControlAnalysisPlayer(object):
         )
 
         if replace_function == "presence":
-            mviz.plot_pitchcontrol_for_event(
+            fig, ax = mviz.plot_pitchcontrol_for_event(
                 event_id=self.event_id,
                 events=self.events,
-                tracking_home=self.tracking_home,
-                tracking_away=self.tracking_away,
+                df_dict=self.df_dict,
                 PPCF=pitch_control_difference,
                 annotate=True,
                 xgrid=xgrid,
@@ -546,17 +533,15 @@ class PlayerPitchControlAnalysisPlayer(object):
                 team_to_plot=self.team_player_to_analyze,
                 alpha=alpha,
                 alpha_pitch_control=alpha_pitch_control,
-                cmap_list=cmap_list,
-                team_colors=team_colors
+                team_color_dict=team_color_dict
 
             )
         elif replace_function == "movement":
 
-            mviz.plot_pitchcontrol_for_event(
+            fig, ax = mviz.plot_pitchcontrol_for_event(
                 event_id=self.event_id,
                 events=self.events,
-                tracking_home=self.tracking_home,
-                tracking_away=self.tracking_away,
+                df_dict=self.df_dict,
                 PPCF=pitch_control_difference,
                 annotate=True,
                 xgrid=xgrid,
@@ -564,36 +549,34 @@ class PlayerPitchControlAnalysisPlayer(object):
                 plotting_difference=True,
                 alpha=alpha,
                 alpha_pitch_control=alpha_pitch_control,
-                cmap_list=cmap_list,
-                team_colors=team_colors
+                team_color_dict=team_color_dict
             )
         elif replace_function == "location":
             event_frame = self.events.loc[self.event_id]["Start Frame"]
             x_coordinate = (
-                self.tracking_home.loc[event_frame][
+                self.df_dict[self.team_player_to_analyze].loc[event_frame][
                     f"{self.team_player_to_analyze}_{self.player_to_analyze}_x"
                 ]
                 + relative_x_change
             )
             y_coordinate = (
-                self.tracking_home.loc[event_frame][
+                self.df_dict[self.team_player_to_analyze].loc[event_frame][
                     f"{self.team_player_to_analyze}_{self.player_to_analyze}_y"
                 ]
                 + relative_y_change
             )
             if replace_velocity == False:
-                replace_x_velocity = self.tracking_home.loc[event_frame][
+                replace_x_velocity = self.df_dict[self.team_player_to_analyze].loc[event_frame][
                     f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
                 ]
-                replace_y_velocity = self.tracking_home.loc[event_frame][
+                replace_y_velocity = self.df_dict[self.team_player_to_analyze].loc[event_frame][
                     f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
                 ]
 
-            mviz.plot_pitchcontrol_for_event(
+            fig, ax = mviz.plot_pitchcontrol_for_event(
                 event_id=self.event_id,
                 events=self.events,
-                tracking_home=self.tracking_home,
-                tracking_away=self.tracking_away,
+                df_dict=self.df_dict,
                 PPCF=pitch_control_difference,
                 annotate=True,
                 xgrid=xgrid,
@@ -607,8 +590,7 @@ class PlayerPitchControlAnalysisPlayer(object):
                 player_y_velocity=replace_y_velocity,
                 alpha=alpha,
                 alpha_pitch_control=alpha_pitch_control,
-                cmap_list=cmap_list,
-                team_colors=team_colors
+                team_color_dict=team_color_dict
             )
         if replace_function == "movement":
             plt.title(
@@ -618,7 +600,7 @@ class PlayerPitchControlAnalysisPlayer(object):
                 + str(self.player_to_analyze)
                 + " during event "
                 + str(self.event_id),
-                fontdict={"fontsize": 22},
+                fontdict={"fontsize": 18},
             )
         elif replace_function == "presence":
             plt.title(
@@ -628,7 +610,7 @@ class PlayerPitchControlAnalysisPlayer(object):
                 + str(self.player_to_analyze)
                 + " during event "
                 + str(self.event_id),
-                fontdict={"fontsize": 22},
+                fontdict={"fontsize": 18},
             )
         elif replace_function == "location":
             plt.title(
@@ -636,14 +618,16 @@ class PlayerPitchControlAnalysisPlayer(object):
                 + str(self.team_player_to_analyze)
                 + " Player "
                 + str(self.player_to_analyze),
-                fontdict={"fontsize": 22},
+                fontdict={"fontsize": 18},
             )
+
+        return fig, ax
 
     def _get_players_on_pitch(self):
         pass_frame = self.events.loc[self.event_id]["Start Frame"]
         players_on_pitch = []
         
-        data_row = self.tracking_home.loc[pass_frame]
+        data_row = self.df_dict[self.team_player_to_analyze].loc[pass_frame]
         
         for index in data_row.index:
             if "_vx" in index:
@@ -654,6 +638,9 @@ class PlayerPitchControlAnalysisPlayer(object):
     def _validate_inputs(self):
         if type(self.player_to_analyze) not in (str, int):
             raise ValueError("player_to_analyze must be an integer or a string")
+
+        if self.team_player_to_analyze not in list(self.df_dict.keys()):
+            raise ValueError(f"team_player_to_analyze must equal {list(self.df_dict.keys())}")
         
         if str(self.player_to_analyze) not in self._get_players_on_pitch():
             raise ValueError(
