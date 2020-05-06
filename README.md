@@ -1,24 +1,40 @@
-# Last Row sample data
+# Liverpool Goal Scene Analyzer
+## Overview
+There are source code for vizualization and notebooks for analysis of Liverpool Goal Scene Dataset.
 
-This repository was created to share new tracking data for educational (and recreational) purposes as part of the Friends of Tracking initiative.
+## Dataset
+* [Friends-of-Tracking-Data-FoTD/Last-Row](https://github.com/Friends-of-Tracking-Data-FoTD/Last-Row)
 
-The data was collected mainly to make the animations posted on twitter account [@lastrowview](https://twitter.com/lastrowview), and it lacks the accuracy needed for research. Most notably, not all players are included in each play (although every player near the ball at any time is).
+## Referenced Source Code
+* [Friends-of-Tracking-Data-FoTD/LaurieOnTracking](https://github.com/Friends-of-Tracking-Data-FoTD/LaurieOnTracking)
+* [andrewsimplebet/FoT-Player-Pitch-Control-Impact](https://github.com/andrewsimplebet/FoT-Player-Pitch-Control-Impact)
 
-The main sample file is ``liverpool_2019.csv``, which contains 19 goals scored by Livepool FC in 2019.
+## Directory Tree
 
-Columns included:
-* ``play``: the scoreline after the goal. The team who scored the goal is the one next to the brackets.
-* ``frame``: the frame number for the current location. Data provided has 20 frames per second.
-* ``player``: the id of the player. The id is consistent within a play but **not between plays**.
-* ``player_num``: the player jersey number. This number is the official one, and did not change for Liverpool in 2019. You can check the corresponding names at this [wikipedia link](https://en.wikipedia.org/wiki/2019%E2%80%9320_Liverpool_F.C._season#Squad_statistics).
-* ``x``, ``y``: coordinates for the player/ball. Pitch coordinates go from 0 to 100 on each axis.
-* ``dx``, ``dx``: change in (x,y) coordinates from last frame to current frame
-* ``z``: height, from 0 to 1.5 (only filled for the ball)
-* ``bgcolor``: the main color for the team (used as background color)
-* ``edgecolor`` the secondary color (used as edge color)
-
-## Getting started
-
-You can get a feel for the dataset by checking the Jupyter Notebook included in this repository. Basic ploting is built on top of ``matplotlib``, and animations are built with ``moviepy``.
-
-Feel free to use the dataset for whatever purpose, but please credit the source and let us know about it!
+    .
+    ├── README.md                <- The top-level README for developers using this project.
+    │
+    ├── datasets                 <- Dataset Dirctory
+    │   │
+    │   ├── positional_data      <- The original, immutable data dump.
+    │   └── preprocessed         <- The final, canonical data sets for modeling.
+    │
+    ├── notebook                 <- Jupyter notebooks. Naming convention is a number (for ordering).
+    │   │
+    │   └── {Number}-{Name}.ipynb        <- Number means processing step, Name means Processing Title 
+    │               |
+    │               └── {Number}-{Name}.ipynb        <- Number means processing step, Name means Processing Title 
+    │                                               e.g. = 1.PreprocessingDataset.ipynb, 2-FitModel.ipynb, 
+    │                                                      3-VerificatePredictPerformance.ipynb
+    │
+    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
+    │
+    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
+    │                         generated with `pip freeze > requirements.txt`
+    │
+    └── src                <- Source code in this project.
+        │
+        ├── main.py                        <- main application program
+        ├── Metrica_PitchControl.py        <- compute pitch control
+        ├── PlayerPitchControlAnalysis.py  <- for simulation of player pitch control impact
+        └── Metrica_Viz.py                 <- vizualization functions
