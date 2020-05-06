@@ -123,7 +123,7 @@ def plot_pitch( field_dimen = (106.0,68.0), field_color ='green', linewidth=2, m
 
     return fig,ax
 
-def plot_frame(df_dict, figax=None, team_color_dict={'HOmne':'r','Away':'b'}, field_dimen = (106.0,68.0), include_player_velocities=False, PlayerMarkerSize=10, PlayerAlpha=0.7, annotate=False ):
+def plot_frame(df_dict, figax=None, team_color_dict={'Home':'r','Away':'b'}, field_dimen = (106.0,68.0), include_player_velocities=False, PlayerMarkerSize=10, PlayerAlpha=0.7, annotate=False ):
     """ plot_frame( hometeam, awayteam )
     
     Plots a frame of Metrica tracking data (player positions and the ball) on a football pitch. All distances should be in meters.
@@ -304,7 +304,6 @@ def plot_pitchcontrol_for_event(
     player_id=0,
     player_x_velocity=0,
     player_y_velocity=0,
-    cmap_list=[],
     alpha_pitch_control=0.5,
     team_color_dict={'Home':"r", 'Away':"b"},
     field_color="white"
@@ -326,7 +325,6 @@ def plot_pitchcontrol_for_event(
         annotate: Boolean variable that determines with player jersey numbers are added to the plot (default is False)
         field_dimen: tuple containing the length and width of the pitch in meters. Default is (106,68)
         plotting_difference: Tells us if we are plotting a difference of pitch controls
-        cmap_list: List of colors to use in the pitch control spaces for each team. Default is an empty list.
         alpha_pitch_control: alpha (transparency) of spaces heatmap. Default is 0.5
         team_color_dict: 
         field_color: color of the field. Default is green.
@@ -341,6 +339,7 @@ def plot_pitchcontrol_for_event(
     event_frame = events.loc[event_id]["Start Frame"]
 
     possession_team = events.loc[event_id].Team
+    cmap = LinearSegmentedColormap.from_list("", [color for team, color in team_color_dict.items() if team != possession_team] + [team_color_dict[possession_team]])
 
     tmp_df_dict = {team:df.loc[event_frame] for team, df in df_dict.items()}
 
@@ -381,34 +380,6 @@ def plot_pitchcontrol_for_event(
     # If we need to apply a transformation to ensure the 0 points are white, apply the transformation
     if plotting_difference:
         PPCF = convert_pitch_control_for_cmap(PPCF)
-
-    home_presence_cmap = 'Reds'
-    away_presence_cmap = 'Blues'
-
-    home_cmap = 'bwr'
-    away_cmap = 'bwr_r'
-
-    if len(cmap_list):
-        home_presence_cmap = LinearSegmentedColormap.from_list("", cmap_list[len(cmap_list) // 2:])
-        away_presence_cmap = LinearSegmentedColormap.from_list("", cmap_list[:len(cmap_list) // 2][::-1])
-        home_cmap = LinearSegmentedColormap.from_list("", cmap_list)
-        away_cmap = LinearSegmentedColormap.from_list("", cmap_list[::-1])
-
-    # If we are plotting a player's space captured, apply a specific cmap
-    if plotting_presence:
-        if team_to_plot != possession_team:
-            PPCF = -1 * PPCF
-        if team_to_plot == "Liverpool":
-            cmap = home_presence_cmap
-        else:
-            cmap = away_presence_cmap
-
-    # Otherwise, apply the default heatmap from the original function
-    else:
-        if possession_team == "Liverpool":
-            cmap = home_cmap
-        else:
-            cmap = away_cmap
 
     # plot pitch control surface
     ax.imshow(

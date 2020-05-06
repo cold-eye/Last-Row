@@ -455,7 +455,6 @@ class PlayerPitchControlAnalysisPlayer(object):
         relative_y_change=0,
         replace_velocity=False,
         replace_function="movement",
-        cmap_list=[],
         alpha=0.7,
         alpha_pitch_control=0.5,
         team_color_dict={'Home':"r", 'Away':"b"}
@@ -500,7 +499,6 @@ class PlayerPitchControlAnalysisPlayer(object):
             Must be either "movement", "presence" or "location". Defaults to "movement". For a detailed description of
             this argument, please refer to the docstring in ``calculate_pitch_control_difference``.
 
-        :param list cmap_list: List of colors to use in the pitch control spaces for each team. Default is an empty list.
         :param float alpha: alpha (transparency) of player markers. Default is 0.7
         :param float alpha_pitch_control: alpha (transparency) of spaces heatmap. Default is 0.5
         :param dict team_color_dict: 
@@ -535,7 +533,6 @@ class PlayerPitchControlAnalysisPlayer(object):
                 team_to_plot=self.team_player_to_analyze,
                 alpha=alpha,
                 alpha_pitch_control=alpha_pitch_control,
-                cmap_list=cmap_list,
                 team_color_dict=team_color_dict
 
             )
@@ -552,7 +549,6 @@ class PlayerPitchControlAnalysisPlayer(object):
                 plotting_difference=True,
                 alpha=alpha,
                 alpha_pitch_control=alpha_pitch_control,
-                cmap_list=cmap_list,
                 team_color_dict=team_color_dict
             )
         elif replace_function == "location":
@@ -594,7 +590,6 @@ class PlayerPitchControlAnalysisPlayer(object):
                 player_y_velocity=replace_y_velocity,
                 alpha=alpha,
                 alpha_pitch_control=alpha_pitch_control,
-                cmap_list=cmap_list,
                 team_color_dict=team_color_dict
             )
         if replace_function == "movement":
