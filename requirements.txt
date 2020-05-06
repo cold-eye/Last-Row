@@ -1,2 +1,4 @@
+matplotlib==2.2.2
+numpy==1.17.2
 pandas==0.25.1
 streamlit==0.58.0
