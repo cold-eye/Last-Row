@@ -2,6 +2,8 @@ import argparse
 import os
 import requests
 
+from markdown import markdown
+
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -50,10 +52,9 @@ def show_movie(movie_path, args):
     st.video(video_bytes)
 
 @st.cache
-def read_dataset(base_dir, play):
+def read_dataset(base_dir, play, args):
     data_dir = os.path.join(base_dir, 'datasets', 'preprocessed', play)
-    
-    infile_list = [infile for infile in os.listdir(data_dir) if not infile.startswith('events.')]
+    infile_list = pd.read_csv(os.path.join(data_dir, 'infile_list.txt'), header=None, names=['infile']).infile.tolist()
 
     df_dict = {infile.replace('.csv','').split('_')[0]:pd.read_csv(os.path.join(data_dir, infile), index_col=[0]) for infile in infile_list}
     # rename columns
@@ -78,7 +79,7 @@ def main_pitch_control(play, base_dir, args):
 
     st.subheader('Simulation')
     # read dataset
-    df_dict, color_dict, events_df = read_dataset(base_dir, play)
+    df_dict, color_dict, events_df = read_dataset(base_dir, play, args)
     
     # show dataframe
     st.markdown('event dataframe is ...')
@@ -200,7 +201,7 @@ def main():
     if args.env == 'local':
         base_dir = os.path.join('.')
     elif args.env == 'heroku':
-        base_dir = os.path.join('https://raw.githubusercontent.com','saeeeeru','Last-Row','develop')
+        base_dir = os.path.join('https://raw.githubusercontent.com','saeeeeru','Last-Row','master')
     else:
         exit(9)
 
@@ -213,7 +214,7 @@ def main():
         with open(md_path, 'r') as fi:
             profile_md = fi.read()
     else:
-        profile_md = requests.get(md_path).content
+        profile_md = requests.get(md_path).content.decode(encoding='utf-8')
 
     st.sidebar.info(profile_md)
 
