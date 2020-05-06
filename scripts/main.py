@@ -1,8 +1,7 @@
 import argparse
 import os
 import requests
-
-from markdown import markdown
+import urllib
 
 import numpy as np
 import pandas as pd
@@ -42,6 +41,9 @@ play_list = [
     'Porto 0 - [2] Liverpool'
 ]
 
+def parse_url(path):
+    return urllib.parse.quote(path, safe=':/')
+
 def show_movie(movie_path, args):
     if args.env == 'local':
         with open(movie_path, 'rb') as fi:
@@ -54,6 +56,9 @@ def show_movie(movie_path, args):
 @st.cache
 def read_dataset(base_dir, play, args):
     data_dir = os.path.join(base_dir, 'datasets', 'preprocessed', play)
+    if args.env == 'heroku':
+        data_dir = parse_url(data_dir)
+    
     infile_list = pd.read_csv(os.path.join(data_dir, 'infile_list.txt'), header=None, names=['infile']).infile.tolist()
 
     df_dict = {infile.replace('.csv','').split('_')[0]:pd.read_csv(os.path.join(data_dir, infile), index_col=[0]) for infile in infile_list}
