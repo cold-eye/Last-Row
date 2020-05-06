@@ -339,7 +339,7 @@ def plot_pitchcontrol_for_event(
     event_frame = events.loc[event_id]["Start Frame"]
 
     possession_team = events.loc[event_id].Team
-    cmap = LinearSegmentedColormap.from_list("", [color for team, color in team_color_dict.items() if team != possession_team] + [team_color_dict[possession_team]])
+    cmap = LinearSegmentedColormap.from_list("", [color for team, color in team_color_dict.items() if team != possession_team] + ["white", team_color_dict[possession_team]])
 
     tmp_df_dict = {team:df.loc[event_frame] for team, df in df_dict.items()}
 
