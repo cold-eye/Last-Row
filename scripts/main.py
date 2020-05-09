@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from PIL import Image
+
 import Metrica_PitchControl as mpc
 from PlayerPitchControlAnalysis import PlayerPitchControlAnalysisPlayer
 
@@ -20,25 +22,25 @@ def parse_args():
     return args
 
 play_list = [
-    'Fulham 0 - [1] Liverpool', 
-    'Genk 0 - [3] Liverpool', 
-    'Bayern 0 - [1] Liverpool', 
-    'Southampton 1 - [2] Liverpool', 
-    'Bournemouth 0 - 3 Liverpool', 
-    'Liverpool [1] - 0 Everton', 
-    'Liverpool [3] - 0 Bournemouth', 
-    'Liverpool [1] - 0 Wolves', 
-    'Liverpool [2] - 1 Chelsea', 
-    'Liverpool [3] - 0 Norwich', 
     'Liverpool [2] - 0 Porto', 
-    'Liverpool [2] - 0 Everton', 
-    'Liverpool [2] - 1 Newcastle', 
-    'Liverpool [2] - 0 Salzburg', 
     'Liverpool [2] - 0 Man City', 
     'Liverpool [1] - 0 Watford', 
+    'Liverpool [1] - 0 Wolves', 
     'Leicester 0 - [3] Liverpool', 
-    'Liverpool [4] - 0 Barcelona', 
-    'Porto 0 - [2] Liverpool'
+    'Liverpool [2] - 0 Salzburg', 
+    'Liverpool [2] - 1 Newcastle', 
+    'Bournemouth 0 - 3 Liverpool', 
+    'Liverpool [3] - 0 Bournemouth', 
+    'Fulham 0 - [1] Liverpool', 
+    'Southampton 1 - [2] Liverpool', 
+    'Liverpool [2] - 1 Chelsea', 
+    'Porto 0 - [2] Liverpool', 
+    'Liverpool [3] - 0 Norwich',
+    'Liverpool [2] - 0 Everton',
+    'Bayern 0 - [1] Liverpool', 
+    'Liverpool [4] - 0 Barcelona',
+    'Liverpool [1] - 0 Everton', 
+    'Genk 0 - [3] Liverpool'
 ]
 
 def parse_url(path):
@@ -74,14 +76,26 @@ def read_dataset(base_dir, play, args):
 
     return df_dict, color_dict, events_df
 
+@st.cache
+def read_analysis_report(base_dir):
+    infile = os.path.join(base_dir, 'datasets', 'analysis_report', 'liverpool2019.csv')
+    summary_df = pd.read_csv(infile, index_col=[0], dtype=object).fillna("")
 
-def main_pitch_control(play, base_dir, args):
-    st.subheader('Annimation Tracking Data')
-    st.markdown('tracking data from [[data link](https://github.com/Friends-of-Tracking-Data-FoTD/Last-Row)].')
+    return summary_df
 
-    movie_dir = os.path.join(base_dir, 'reports', 'movie', 'pitch_control')
-    show_movie(os.path.join(movie_dir, f'{play}.mp4'), args)
+def main_analysis_report(play, base_dir, args):
+    summary_df = read_analysis_report(base_dir)
+    stretch_index_text, pitch_control_text = summary_df.loc[play].values
+    if stretch_index_text:
+        st.header('Stretch Index')
+        st.markdown('*'+stretch_index_text+'*')
+        main_stretch_index(play, base_dir, args)
+    if pitch_control_text:
+        st.header('Pitch Control')
+        st.markdown('*'+pitch_control_text+'*')
+        main_pitch_control(play, base_dir, args)
 
+def player_pitch_control_impact(play, base_dir, args):
     st.subheader('Simulation')
     # read dataset
     df_dict, color_dict, events_df = read_dataset(base_dir, play, args)
@@ -189,13 +203,19 @@ def main_pitch_control(play, base_dir, args):
             st.pyplot(fig, bbox_layout='tight')
     st.success('done !!')
 
+def main_pitch_control(play, base_dir, args):
+    # show video
+    st.subheader('Annimation Tracking Data')
+    st.markdown('tracking data from [[Friends-of-Tracking-Data-FoTD/Last-Row](https://github.com/Friends-of-Tracking-Data-FoTD/Last-Row)], and referenced source code [[andrewsimplebet/FoT-Player-Pitch-Control-Impact](https://github.com/andrewsimplebet/FoT-Player-Pitch-Control-Impact)]')
 
+    movie_dir = os.path.join(base_dir, 'reports', 'movie', 'pitch_control')
+    show_movie(os.path.join(movie_dir, f'{play}.mp4'), args)
 
 def main_stretch_index(play, base_dir, args):
 
     # show video
     st.subheader('Visualization')
-    st.markdown('above is tracking data[[data link](https://github.com/Friends-of-Tracking-Data-FoTD/Last-Row)], and below is stretch index [[paper link](https://www.researchgate.net/publication/230600552_Capturing_complex_non-linear_team_behaviours_during_competitive_football_performance)].')
+    st.markdown('above is tracking data[[Friends-of-Tracking-Data-FoTD/Last-Row](https://github.com/Friends-of-Tracking-Data-FoTD/Last-Row)], and below is stretch index [[paper link](https://www.researchgate.net/publication/230600552_Capturing_complex_non-linear_team_behaviours_during_competitive_football_performance)].')
     movie_dir = os.path.join(base_dir, 'reports', 'movie', 'stretch_annotated')
     show_movie(os.path.join(movie_dir, f'{play}.mp4'), args)
     
@@ -211,31 +231,46 @@ def main():
         exit(9)
 
     # set sidebar
-    st.sidebar.title('Menu')
-    mode = st.sidebar.radio('Which mode do yo want to see??', ['Annimation with Stretch Index', 'Player Pitch Control Impact'])
+    st.sidebar.title('Liverpool Goal Scene Analyzer')
+    st.sidebar.markdown("for [Friends of Tracking](https://www.youtube.com/channel/UCUBFJYcag8j2rm_9HkrrA7w)")
+    st.sidebar.markdown("")
 
+    st.sidebar.header("Navigation")
+    st.sidebar.subheader("Play")
+
+    # return selected play
+    play = st.sidebar.selectbox('Which Goal do you want to see??', play_list)
+
+    # mode
+    st.sidebar.subheader("Mode")
+    mode = st.sidebar.radio('Which mode do yo want to see??', ['Analysis Report', 'Annimation with Stretch Index', 'Player Pitch Control Impact'])
+    st.sidebar.markdown(""); st.sidebar.markdown("")
+    
+    # about
+    st.sidebar.header('About')
+    image_path = os.path.join(base_dir, 'reports', 'figure', 'profile.JPG')
     md_path = os.path.join(base_dir, 'scripts', 'PROFILE.md')
     if args.env == 'local':
+        image = Image.open(image_path)
         with open(md_path, 'r') as fi:
             profile_md = fi.read()
     else:
         profile_md = requests.get(md_path).content.decode(encoding='utf-8')
-
+        image = requests.get(image_path).content
+    st.sidebar.image(image, caption='@saeeeeru', use_column_width=True)
     st.sidebar.info(profile_md)
-
+    st.sidebar.markdown(""); st.sidebar.markdown("")
+    
     # set title
-    st.title('Liverpool Goal Scene Analyzer')
-
-    # set header
-    st.header(mode)
-
-    # return selected play
-    play = st.selectbox('Which Goal do you want to see??', play_list)
+    st.title(f'{mode}, {play}')
 
     if mode == 'Annimation with Stretch Index':
         main_stretch_index(play, base_dir, args)
     elif mode == 'Player Pitch Control Impact':
         main_pitch_control(play, base_dir, args)
+        player_pitch_control_impact(play, base_dir, args)
+    elif mode == 'Analysis Report':
+        main_analysis_report(play, base_dir, args)
     else:
         exit()
 
