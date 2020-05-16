@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 
+
 class PlayerPitchControlAnalysisPlayer(object):
     def __init__(
         self,
@@ -15,7 +16,6 @@ class PlayerPitchControlAnalysisPlayer(object):
         player_to_analyze,
         field_dimens=(106.0, 68.0),
         n_grid_cells_x=50,
-
     ):
         """
         This class is used to consolidate many of the functions that would be used to analyze the impact of an
@@ -66,6 +66,7 @@ class PlayerPitchControlAnalysisPlayer(object):
 
 
         """
+        # to do: convert to dataclass (@saeeeeru )
         self.df_dict = df_dict
         self.params = params
         self.events = events
@@ -142,10 +143,12 @@ class PlayerPitchControlAnalysisPlayer(object):
             if team == self.team_player_to_analyze:
                 df_tmp = df.copy()
                 df_tmp.at[
-                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
+                    event_frame,
+                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx",
                 ] = replace_x_velocity
                 df_tmp.at[
-                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
+                    event_frame,
+                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy",
                 ] = replace_y_velocity
                 tmp_df_dict[team] = df_tmp
 
@@ -183,19 +186,22 @@ class PlayerPitchControlAnalysisPlayer(object):
             if team == self.team_player_to_analyze:
                 df_tmp = df.copy()
                 df_tmp.at[
-                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_x"
+                    event_frame,
+                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_x",
                 ] = np.nan
                 df_tmp.at[
-                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_y"
+                    event_frame,
+                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_y",
                 ] = np.nan
                 df_tmp.at[
-                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
+                    event_frame,
+                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx",
                 ] = np.nan
                 df_tmp.at[
-                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
+                    event_frame,
+                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy",
                 ] = np.nan
                 tmp_df_dict[team] = df_tmp
-
 
         edited_pitch_control, xgrid, ygrid = mpc.generate_pitch_control_for_event(
             event_id=self.event_id,
@@ -262,19 +268,23 @@ class PlayerPitchControlAnalysisPlayer(object):
             if team == self.team_player_to_analyze:
                 df_tmp = df.copy()
                 df_tmp.at[
-                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_x"
+                    event_frame,
+                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_x",
                 ] = relative_x_change
                 df_tmp.at[
-                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_y"
+                    event_frame,
+                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_y",
                 ] = relative_y_change
                 df_tmp.at[
-                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
+                    event_frame,
+                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx",
                 ] = replace_x_velocity
                 df_tmp.at[
-                    event_frame, f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
+                    event_frame,
+                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy",
                 ] = replace_y_velocity
                 tmp_df_dict[team] = df_tmp
-        
+
         edited_pitch_control, xgrid, ygrid = mpc.generate_pitch_control_for_event(
             event_id=self.event_id,
             events=self.events,
@@ -426,11 +436,7 @@ class PlayerPitchControlAnalysisPlayer(object):
         """
         team_with_possession = self.events.loc[self.event_id].Team
 
-        (
-            pitch_control_difference,
-            _,
-            _,
-        ) = self.calculate_pitch_control_difference(
+        (pitch_control_difference, _, _,) = self.calculate_pitch_control_difference(
             replace_x_velocity=replace_x_velocity,
             replace_y_velocity=replace_y_velocity,
             relative_x_change=relative_x_change,
@@ -457,7 +463,7 @@ class PlayerPitchControlAnalysisPlayer(object):
         replace_function="movement",
         alpha=0.7,
         alpha_pitch_control=0.5,
-        team_color_dict={'Home':"r", 'Away':"b"}
+        team_color_dict={"Home": "r", "Away": "b"},
     ):
         """
         Function description:
@@ -501,7 +507,7 @@ class PlayerPitchControlAnalysisPlayer(object):
 
         :param float alpha: alpha (transparency) of player markers. Default is 0.7
         :param float alpha_pitch_control: alpha (transparency) of spaces heatmap. Default is 0.5
-        :param dict team_color_dict: 
+        :param dict team_color_dict:
 
 
         Returns:
@@ -533,8 +539,7 @@ class PlayerPitchControlAnalysisPlayer(object):
                 team_to_plot=self.team_player_to_analyze,
                 alpha=alpha,
                 alpha_pitch_control=alpha_pitch_control,
-                team_color_dict=team_color_dict
-
+                team_color_dict=team_color_dict,
             )
         elif replace_function == "movement":
 
@@ -549,7 +554,7 @@ class PlayerPitchControlAnalysisPlayer(object):
                 plotting_difference=True,
                 alpha=alpha,
                 alpha_pitch_control=alpha_pitch_control,
-                team_color_dict=team_color_dict
+                team_color_dict=team_color_dict,
             )
         elif replace_function == "location":
             event_frame = self.events.loc[self.event_id]["Start Frame"]
@@ -565,13 +570,13 @@ class PlayerPitchControlAnalysisPlayer(object):
                 ]
                 + relative_y_change
             )
-            if replace_velocity == False:
-                replace_x_velocity = self.df_dict[self.team_player_to_analyze].loc[event_frame][
-                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"
-                ]
-                replace_y_velocity = self.df_dict[self.team_player_to_analyze].loc[event_frame][
-                    f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"
-                ]
+            if not replace_velocity:
+                replace_x_velocity = self.df_dict[self.team_player_to_analyze].loc[
+                    event_frame
+                ][f"{self.team_player_to_analyze}_{self.player_to_analyze}_vx"]
+                replace_y_velocity = self.df_dict[self.team_player_to_analyze].loc[
+                    event_frame
+                ][f"{self.team_player_to_analyze}_{self.player_to_analyze}_vy"]
 
             fig, ax = mviz.plot_pitchcontrol_for_event(
                 event_id=self.event_id,
@@ -590,7 +595,7 @@ class PlayerPitchControlAnalysisPlayer(object):
                 player_y_velocity=replace_y_velocity,
                 alpha=alpha,
                 alpha_pitch_control=alpha_pitch_control,
-                team_color_dict=team_color_dict
+                team_color_dict=team_color_dict,
             )
         if replace_function == "movement":
             plt.title(
@@ -626,9 +631,9 @@ class PlayerPitchControlAnalysisPlayer(object):
     def _get_players_on_pitch(self):
         pass_frame = self.events.loc[self.event_id]["Start Frame"]
         players_on_pitch = []
-        
+
         data_row = self.df_dict[self.team_player_to_analyze].loc[pass_frame]
-        
+
         for index in data_row.index:
             if "_vx" in index:
                 if not np.isnan(data_row.loc[index]):
@@ -640,8 +645,10 @@ class PlayerPitchControlAnalysisPlayer(object):
             raise ValueError("player_to_analyze must be an integer or a string")
 
         if self.team_player_to_analyze not in list(self.df_dict.keys()):
-            raise ValueError(f"team_player_to_analyze must equal {list(self.df_dict.keys())}")
-        
+            raise ValueError(
+                f"team_player_to_analyze must equal {list(self.df_dict.keys())}"
+            )
+
         if str(self.player_to_analyze) not in self._get_players_on_pitch():
             raise ValueError(
                 "player_to_analyze is either not on the correct team, or was not on the pitch at the time of the event"
