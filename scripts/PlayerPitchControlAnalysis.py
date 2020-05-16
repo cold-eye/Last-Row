@@ -1,8 +1,10 @@
-import Metrica_PitchControl as mpc
-import Metrica_Viz as mviz
+import warnings
+
 import numpy as np
 import matplotlib.pyplot as plt
-import warnings
+
+import Metrica_PitchControl as mpc
+import Metrica_Viz as mviz
 
 
 class PlayerPitchControlAnalysisPlayer(object):
@@ -66,7 +68,6 @@ class PlayerPitchControlAnalysisPlayer(object):
 
 
         """
-        # to do: convert to dataclass (@saeeeeru )
         self.df_dict = df_dict
         self.params = params
         self.events = events
